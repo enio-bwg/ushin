@@ -33,6 +33,7 @@ GO
 UNION ALL
 
 /* Admissao */
+/* Admissao */
 
 Select
 	'ADMISSAO' As Tipo,
