@@ -1,7 +1,18 @@
 USE [BWG_GA_MT]
 GO
 
+/****** Object:  View [ApTenantUser].[BWG_SocQueryDados_Ushin_View]    Script Date: 05/05/2022 14:47:58 ******/
+SET ANSI_NULLS ON
+GO
 
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+
+
+CREATE OR ALTER     View [ApTenantUser].[BWG_SocQueryDados_Ushin_View] As (
 
 /* Alteracao da Data de Admissao através do objeto 1106 nas transacoes especiais 15950, 15956, 15979 */
 
@@ -12,7 +23,8 @@ GO
 	CdiContratado,
     CAST(DtdAdmissao As DATE) As DtdAdmissao,
 	CdiSituacao,
-	CdiVinculo
+	CdiVinculo,
+	SITUACAO_FUNCIONARIO
 
 
 	From BWG_SocQueryBase_Ushin_View
@@ -33,7 +45,6 @@ GO
 UNION ALL
 
 /* Admissao */
-/* Admissao */
 
 Select
 	'ADMISSAO' As Tipo,
@@ -42,7 +53,8 @@ Select
 	CdiContratado,
     CAST(DtdAdmissao As DATE) As DtdAdmissao,
 	CdiSituacao,
-	CdiVinculo
+	CdiVinculo,
+	SITUACAO_FUNCIONARIO
 
 	From BWG_SocQueryBase_Ushin_View
 		Inner Join LogsTransacoesCampos On (LTC_CdiCampo = 9740 And LTC_DssCampoConteudo = CON_NUSCICNUMERO)
@@ -71,7 +83,8 @@ Select
 	CdiContratado,
     CAST(DtdAdmissao As DATE) As DtdAdmissao,
 	CdiSituacao,
-	CdiVinculo
+	CdiVinculo,
+	SITUACAO_FUNCIONARIO
 
 	From BWG_SocQueryBase_Ushin_View
 		Inner Join LogsTransacoesRegistros on (LTE_CdiCampo_Base = 10430 And LTE_CdiConteudo_Base = CdiContratado)
@@ -104,7 +117,8 @@ Select
 	CdiContratado,
     CAST(DtdAdmissao As DATE) As DtdAdmissao,
 	CdiSituacao,
-	CdiVinculo
+	CdiVinculo,
+	SITUACAO_FUNCIONARIO
 
 	From BWG_SocQueryBase_Ushin_View
 		Inner Join ContratadosGrades On (CRS_CdiContratado = CdiContratado)
@@ -133,19 +147,20 @@ UNION ALL
 Select
 	'RESCISAO AFASTAMENTO E RETORNO' As Tipo,
 	CST_CdiConSituacao  As LOG,
-	LTR_DtdDataHoraTransacaoInicio,
+	CST_DtdSituacaoInicio As 'LTR_DtdDataHoraTransacaoInicio',
 	CdiContratado,
     CAST(DtdAdmissao As DATE) As DtdAdmissao,
 	CdiSituacao,
-	CdiVinculo
+	CdiVinculo,
+	Case	When CST_CdiSituacao = 1		Then 'ATIVO'
+			When CST_CdiSituacao = 9		Then 'FERIAS'
+			When CST_CdiSituacao In (0,2,3,99) Then 'INATIVO' Else 'AFASTADO'
+	End As SITUACAO_FUNCIONARIO
 
 	From BWG_SocQueryBase_Ushin_View
 		Inner Join ConSituacoes On (CST_CdiContratado = CdiContratado)
-		Inner Join LogsTransacoes On (CST_CdiLogTransacao = LTR_CdiLogTransacao)
-	Where CST_DtdSituacaoInicio <= GETDATE()
-		And LTR_DtdDataHoraTransacaoInicio >= GETDATE()-6
-		AND CST_CdiSituacao not in (0,2,99)
-
+	Where CST_DtdSituacaoInicio Between GETDATE()-6 and GETDATE()
+	And DtdAdmissao <> CST_DtdSituacaoInicio			
 	And CST_CdiConSituacao  Not In (
 									Select BCO_NuiConteudo_Inteiro From LogsIntegracoes
 										Inner Join LogsIntegracoesCampos On (BCO_CdiLogIntegracao = BCG_CdiLogIntegracao)
@@ -164,7 +179,8 @@ Select
 	CdiContratado,
     CAST(DtdAdmissao As DATE) As DtdAdmissao,
 	CdiSituacao,
-	CdiVinculo
+	CdiVinculo,
+	SITUACAO_FUNCIONARIO
 
 	From BWG_SocQueryBase_Ushin_View
 		INNER JOIN (
@@ -192,7 +208,8 @@ Select
 	CdiContratado,
     CAST(DtdAdmissao As DATE) As DtdAdmissao,
 	CdiSituacao,
-	CdiVinculo
+	CdiVinculo,
+	SITUACAO_FUNCIONARIO
 
 		From BWG_SocQueryBase_Ushin_View
 			Inner Join ContratadosExtras On (COE_CdiContratado = CdiContratado)
@@ -213,5 +230,7 @@ Select
 									Where BCO_DssCampo = 'LOG'
 									)
 
+)
+GO
 
 
